@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Signup - ExpenseEase</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  /* Reset & Base Styles */
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+  body {
+    font-family: 'Montserrat', sans-serif;
+    line-height: 1.6;
+    background-color: #f0f4f8;
+    color: #333;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Container */
+  .container {
+    width: 90%;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  /* Header */
+  .header {
+    background-color: #4CAF50;
+    padding: 20px 0;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  }
+  .header .header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .logo {
+    font-size: 1.8em;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 2px;
+    text-decoration: none;
+  }
+  nav ul {
+    list-style: none;
+    display: flex;
+    gap: 20px;
+  }
+  nav ul li a {
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.3s;
+    padding: 5px 10px;
+    border-radius: 4px;
+  }
+  nav ul li a:hover {
+    color: #ffd700;
+    background-color: rgba(255,255,255,0.1);
+  }
+  nav ul li a.active {
+    background-color: rgba(255,255,255,0.2);
+  }
+
+  /* Page Header */
+  .page-header {
+    background: linear-gradient(135deg, #81ecec, #74b9ff);
+    padding: 40px 20px;
+    text-align: center;
+    color: #fff;
+  }
+  .page-header h2 {
+    font-size: 2.2em;
+    margin-bottom: 10px;
+  }
+  .page-header p {
+    font-size: 1.1em;
+    opacity: 0.9;
+  }
+
+  /* Signup Section */
+  .signup-section {
+    padding: 60px 20px;
+    background-color: #fff;
+    flex: 1;
+    display: flex;
+    align-items: center;
+  }
+  .signup-container {
+    display: flex;
+    max-width: 1000px;
+    margin: 0 auto;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .signup-info {
+    flex: 1;
+    background: linear-gradient(135deg, #4CAF50, #45a049);
+    color: white;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .signup-info h3 {
+    font-size: 1.8em;
+    margin-bottom: 20px;
+  }
+  .signup-info ul {
+    list-style: none;
+    margin-top: 20px;
+  }
+  .signup-info li {
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+  }
+  .signup-info li:before {
+    content: "✓";
+    margin-right: 10px;
+    background: rgba(255,255,255,0.2);
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+  }
+  .role-info {
+    margin-top: 30px;
+    padding: 20px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 8px;
+  }
+  .role-info h4 {
+    margin-bottom: 15px;
+    font-size: 1.2em;
+  }
+  .role-desc {
+    margin-bottom: 10px;
+    font-size: 0.9em;
+  }
+  .signup-form-container {
+    flex: 1;
+    padding: 40px;
+    background: #fff;
+  }
+  .signup-form {
+    max-width: 400px;
+    margin: 0 auto;
+  }
+  .signup-form h3 {
+    text-align: center;
+    margin-bottom: 30px;
+    color: #4CAF50;
+    font-size: 1.8em;
+  }
+  .form-group {
+    margin-bottom: 20px;
+  }
+  label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #555;
+  }
+  input, select {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 1em;
+    font-family: 'Montserrat', sans-serif;
+    transition: border-color 0.3s, box-shadow 0.3s;
+  }
+  input:focus, select:focus {
+    outline: none;
+    border-color: #4CAF50;
+    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+  }
+  .btn-primary {
+    width: 100%;
+    padding: 14px;
+    background-color: #4CAF50;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+    margin-top: 10px;
+  }
+  .btn-primary:hover {
+    background-color: #45a049;
+    transform: translateY(-2px);
+  }
+  .btn-primary:active {
+    transform: translateY(0);
+  }
+  .btn-primary:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+    transform: none;
+  }
+  .message {
+    margin-top: 15px;
+    text-align: center;
+    padding: 10px;
+    border-radius: 5px;
+    font-weight: 500;
+  }
+  .error {
+    background-color: #ffebee;
+    color: #c62828;
+    border: 1px solid #ffcdd2;
+  }
+  .success {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+    border: 1px solid #c8e6c9;
+  }
+  .signup-footer {
+    text-align: center;
+    margin-top: 20px;
+    color: #666;
+  }
+  .signup-footer a {
+    color: #4CAF50;
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .signup-footer a:hover {
+    text-decoration: underline;
+  }
+
+  /* Password Strength Indicator */
+  .password-strength {
+    margin-top: 5px;
+    height: 5px;
+    border-radius: 5px;
+    background-color: #eee;
+    overflow: hidden;
+  }
+  .strength-bar {
+    height: 100%;
+    width: 0%;
+    transition: width 0.3s, background-color 0.3s;
+  }
+  .strength-weak {
+    background-color: #ff5252;
+    width: 25%;
+  }
+  .strength-medium {
+    background-color: #ffb142;
+    width: 50%;
+  }
+  .strength-strong {
+    background-color: #2ed573;
+    width: 75%;
+  }
+  .strength-very-strong {
+    background-color: #4CAF50;
+    width: 100%;
+  }
+  .password-hints {
+    margin-top: 5px;
+    font-size: 0.8em;
+    color: #666;
+  }
+  .password-hints ul {
+    list-style: none;
+    margin-top: 5px;
+  }
+  .password-hints li {
+    margin-bottom: 3px;
+    display: flex;
+    align-items: center;
+  }
+  .password-hints li:before {
+    content: "•";
+    margin-right: 5px;
+    color: #ccc;
+  }
+  .password-hints li.valid:before {
+    content: "✓";
+    color: #4CAF50;
+    font-weight: bold;
+  }
+
+  /* Footer */
+  .footer {
+    background-color: #2d3436;
+    padding: 30px 20px;
+    color: #fff;
+    text-align: center;
+    margin-top: auto;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .signup-container {
+      flex-direction: column;
+    }
+    .signup-info {
+      padding: 30px 20px;
+    }
+    .header .header-container {
+      flex-direction: column;
+      gap: 15px;
+    }
+    nav ul {
+      justify-content: center;
+    }
+  }
+</style>
+</head>
+<body>
+<header class="header">
+  <div class="container header-container">
+    <a href="index.html" class="logo">ExpenseEase</a>
+    <nav>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="signup.html" class="active">Sign Up</a></li>
+        <li><a href="login.html">Login</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<section class="page-header">
+  <div class="container">
+    <h2>Join ExpenseEase Today</h2>
+    <p>Create your account and start managing expenses efficiently</p>
+  </div>
+</section>
+
+<section class="signup-section">
+  <div class="container">
+    <div class="signup-container">
+      <div class="signup-info">
+        <h3>Why Join ExpenseEase?</h3>
+        <p>Create your account to access powerful expense management features:</p>
+        <ul>
+          <li>Submit and track expense requests</li>
+          <li>Get real-time status updates</li>
+          <li>Access detailed expense reports</li>
+          <li>Streamline approval workflows</li>
+          <li>Mobile-friendly experience</li>
+        </ul>
+        
+        <div class="role-info">
+          <h4>Role Information</h4>
+          <div class="role-desc">
+            <strong>Employee:</strong> Submit expenses and track approvals
+          </div>
+          <div class="role-desc">
+            <strong>Manager:</strong> Approve team expenses and view reports
+          </div>
+          <div class="role-desc">
+            <strong>Admin:</strong> Full system access and user management
+          </div>
+        </div>
+      </div>
+      <div class="signup-form-container">
+        <form id="signupForm" class="signup-form">
+          <h3>Create Account</h3>
+          
+          <div class="form-group">
+            <label for="name">Full Name</label>
+            <input type="text" id="name" placeholder="Enter your full name" required />
+          </div>
+          
+          <div class="form-group">
+            <label for="username">Username</label>
+            <input type="text" id="username" placeholder="Choose a username" required />
+          </div>
+          
+          <div class="form-group">
+            <label for="email">Email Address</label>
+            <input type="email" id="email" placeholder="Enter your email" required />
+          </div>
+          
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" placeholder="Create a strong password" required />
+            <div class="password-strength">
+              <div class="strength-bar" id="passwordStrength"></div>
+            </div>
+            <div class="password-hints">
+              <div>Password must contain:</div>
+              <ul>
+                <li id="lengthHint">At least 8 characters</li>
+                <li id="uppercaseHint">One uppercase letter</li>
+                <li id="lowercaseHint">One lowercase letter</li>
+                <li id="numberHint">One number</li>
+              </ul>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="confirmPassword">Confirm Password</label>
+            <input type="password" id="confirmPassword" placeholder="Re-enter your password" required />
+          </div>
+          
+          <div class="form-group">
+            <label for="role">Account Type</label>
+            <select id="role" required>
+              <option value="">Select your role</option>
+              <option value="employee">Employee</option>
+              <option value="manager">Manager</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          
+          <button type="submit" class="btn-primary" id="submitBtn">Create Account</button>
+          
+          <p id="signupMsg" class="message"></p>
+          
+          <div class="signup-footer">
+            <p>Already have an account? <a href="login.html">Login here</a></p>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container footer-content">
+    <p>&copy; 2025 ExpenseEase. All rights reserved.</p>
+  </div>
+</footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const signupForm = document.getElementById('signupForm');
+  const signupMsg = document.getElementById('signupMsg');
+  const passwordInput = document.getElementById('password');
+  const confirmPasswordInput = document.getElementById('confirmPassword');
+  const passwordStrength = document.getElementById('passwordStrength');
+  const submitBtn = document.getElementById('submitBtn');
+  
+  // Password strength checker
+  passwordInput.addEventListener('input', function() {
+    const password = this.value;
+    checkPasswordStrength(password);
+  });
+  
+  // Confirm password checker
+  confirmPasswordInput.addEventListener('input', function() {
+    const password = passwordInput.value;
+    const confirmPassword = this.value;
+    
+    if (confirmPassword && password !== confirmPassword) {
+      this.style.borderColor = '#ff5252';
+      this.style.boxShadow = '0 0 0 3px rgba(255, 82, 82, 0.2)';
+    } else {
+      this.style.borderColor = '#4CAF50';
+      this.style.boxShadow = '0 0 0 3px rgba(76, 175, 80, 0.2)';
+    }
+  });
+  
+  // Password strength function
+  function checkPasswordStrength(password) {
+    const hints = {
+      length: document.getElementById('lengthHint'),
+      uppercase: document.getElementById('uppercaseHint'),
+      lowercase: document.getElementById('lowercaseHint'),
+      number: document.getElementById('numberHint')
+    };
+    
+    let strength = 0;
+    
+    // Check length
+    if (password.length >= 8) {
+      strength++;
+      hints.length.classList.add('valid');
+    } else {
+      hints.length.classList.remove('valid');
+    }
+    
+    // Check uppercase
+    if (/[A-Z]/.test(password)) {
+      strength++;
+      hints.uppercase.classList.add('valid');
+    } else {
+      hints.uppercase.classList.remove('valid');
+    }
+    
+    // Check lowercase
+    if (/[a-z]/.test(password)) {
+      strength++;
+      hints.lowercase.classList.add('valid');
+    } else {
+      hints.lowercase.classList.remove('valid');
+    }
+    
+    // Check numbers
+    if (/[0-9]/.test(password)) {
+      strength++;
+      hints.number.classList.add('valid');
+    } else {
+      hints.number.classList.remove('valid');
+    }
+    
+    // Update strength bar
+    passwordStrength.className = 'strength-bar';
+    if (strength === 1) {
+      passwordStrength.classList.add('strength-weak');
+    } else if (strength === 2) {
+      passwordStrength.classList.add('strength-medium');
+    } else if (strength === 3) {
+      passwordStrength.classList.add('strength-strong');
+    } else if (strength === 4) {
+      passwordStrength.classList.add('strength-very-strong');
+    }
+    
+    // Enable/disable submit button based on password strength
+    submitBtn.disabled = strength < 3;
+  }
+  
+  // Form submission
+  signupForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const name = document.getElementById('name').value.trim();
+    const username = document.getElementById('username').value.trim();
+    const email = document.getElementById('email').value.trim().toLowerCase();
+    const password = document.getElementById('password').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+    const role = document.getElementById('role').value;
+    
+    // Validation
+    if (!name || !username || !email || !password || !confirmPassword || !role) {
+      signupMsg.textContent = 'Please fill in all fields.';
+      signupMsg.className = 'message error';
+      return;
+    }
+    
+    if (password !== confirmPassword) {
+      signupMsg.textContent = 'Passwords do not match.';
+      signupMsg.className = 'message error';
+      return;
+    }
+    
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      signupMsg.textContent = 'Please enter a valid email address.';
+      signupMsg.className = 'message error';
+      return;
+    }
+    
+    // Username validation
+    if (username.length < 3) {
+      signupMsg.textContent = 'Username must be at least 3 characters long.';
+      signupMsg.className = 'message error';
+      return;
+    }
+    
+    const users = JSON.parse(localStorage.getItem('users')) || [];
+    
+    // Check if username already exists
+    if (users.some(user => user.username === username)) {
+      signupMsg.textContent = 'Username already taken. Please choose another.';
+      signupMsg.className = 'message error';
+      return;
+    }
+    
+    // Check if email already exists
+    if (users.some(user => user.email === email)) {
+      signupMsg.textContent = 'Email already registered. Please use a different email.';
+      signupMsg.className = 'message error';
+      return;
+    }
+    
+    // Generate user ID
+    const id = 'user' + Date.now();
+    
+    // Save user
+    users.push({ 
+      id, 
+      name, 
+      username, 
+      email, 
+      password, 
+      role,
+      joinDate: new Date().toISOString().split('T')[0]
+    });
+    localStorage.setItem('users', JSON.stringify(users));
+    
+    // Show success message
+    signupMsg.textContent = `Account created successfully! Welcome to ExpenseEase, ${name}. Redirecting to login...`;
+    signupMsg.className = 'message success';
+    
+    // Reset form
+    signupForm.reset();
+    passwordStrength.className = 'strength-bar';
+    document.querySelectorAll('.password-hints li').forEach(li => {
+      li.classList.remove('valid');
+    });
+    
+    // Redirect to login page after delay
+    setTimeout(() => {
+      window.location.href = 'login.html';
+    }, 3000);
+  });
+  
+  // Clear message when user starts typing
+  const formInputs = signupForm.querySelectorAll('input, select');
+  formInputs.forEach(input => {
+    input.addEventListener('input', function() {
+      signupMsg.textContent = '';
+      signupMsg.className = 'message';
+    });
+  });
+});
+</script>
+</body>
+</html>
