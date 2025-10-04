@@ -19,7 +19,7 @@
   .container { 
     display: flex; 
     flex-direction: column; 
-    max-width: 800px; 
+    max-width: 1000px; 
     margin: auto; 
   }
   .card { 
@@ -171,6 +171,7 @@
     margin-top: 10px;
     display: flex;
     gap: 10px;
+    flex-wrap: wrap;
   }
   
   /* Tabs */
@@ -178,6 +179,7 @@
     display: flex;
     margin-bottom: 20px;
     border-bottom: 1px solid #ddd;
+    flex-wrap: wrap;
   }
   .tab {
     padding: 10px 20px;
@@ -229,17 +231,52 @@
     margin: 10px 0;
     border-radius: 4px;
   }
+
+  /* Team Assignment Styles */
+  .team-member {
+    background: #fff;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .member-info {
+    flex: 1;
+  }
+  .member-name {
+    font-weight: bold;
+    font-size: 16px;
+    margin-bottom: 5px;
+  }
+  .member-details {
+    color: #666;
+    font-size: 14px;
+  }
+
+  /* Empty State */
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #6c757d;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
 </style>
 </head>
 <body>
 
-<h2>Manager Dashboard</h2>
+<h2>Manager Dashboard - ExpenseEase</h2>
 
 <div class="tabs">
   <div class="tab active" onclick="switchTab('dashboard')">Dashboard</div>
   <div class="tab" onclick="switchTab('pending')">Pending Requests</div>
   <div class="tab" onclick="switchTab('team')">Team Requests</div>
   <div class="tab" onclick="switchTab('all')">All Requests</div>
+  <div class="tab" onclick="switchTab('teamMembers')">My Team</div>
 </div>
 
 <div class="container">
@@ -269,7 +306,7 @@
     
     <div class="manager-note">
       <strong>Manager Note:</strong> As a manager, you can approve or decline expense requests from employees in your team. 
-      You can also view all requests but can only take action on pending ones.
+      You can also view all requests but can only take action on pending ones from your team members.
     </div>
     
     <div class="card" onclick="location.href='expenses.html'"><h3>Add Expense</h3></div>
@@ -278,7 +315,7 @@
   </div>
   
   <div id="pending" class="tab-content">
-    <h3>Pending Expense Requests</h3>
+    <h3>Pending Expense Requests - My Team</h3>
     <div id="pendingRequestsList">
       <!-- Pending requests will be loaded here -->
     </div>
@@ -293,8 +330,18 @@
   
   <div id="all" class="tab-content">
     <h3>All Expense Requests</h3>
+    <div class="manager-note">
+      <strong>Note:</strong> You can view all requests but can only approve/decline requests from your team members.
+    </div>
     <div id="allRequestsList">
       <!-- All requests will be loaded here -->
+    </div>
+  </div>
+
+  <div id="teamMembers" class="tab-content">
+    <h3>My Team Members</h3>
+    <div id="teamMembersList">
+      <!-- Team members will be loaded here -->
     </div>
   </div>
 </div>
@@ -333,19 +380,16 @@
       return;
     }
     
-    // Initialize requests in localStorage if not exists
+    // Initialize data in localStorage if not exists
     if (!localStorage.getItem('expenseRequests')) {
       localStorage.setItem('expenseRequests', JSON.stringify([]));
     }
-    
-    // Initialize team data if not exists
+    if (!localStorage.getItem('users')) {
+      localStorage.setItem('users', JSON.stringify([]));
+    }
     if (!localStorage.getItem('teamAssignments')) {
       // Create sample team assignments
-      const teamAssignments = {
-        'manager1': ['emp1', 'emp2', 'emp3'],
-        'manager2': ['emp4', 'emp5']
-      };
-      localStorage.setItem('teamAssignments', JSON.stringify(teamAssignments));
+      initializeTeamAssignments();
     }
     
     // Load dashboard stats and requests
@@ -353,7 +397,25 @@
     loadPendingRequests();
     loadTeamRequests();
     loadAllRequests();
+    loadTeamMembers();
   });
+
+  // Initialize team assignments
+  function initializeTeamAssignments() {
+    const users = JSON.parse(localStorage.getItem('users')) || [];
+    const teamAssignments = {};
+    
+    // Find current manager
+    const currentUser = JSON.parse(localStorage.getItem('loggedInUser'));
+    
+    // Assign employees to this manager
+    const employees = users.filter(user => user.role === 'employee');
+    if (employees.length > 0) {
+      teamAssignments[currentUser.id] = employees.map(emp => emp.id);
+    }
+    
+    localStorage.setItem('teamAssignments', JSON.stringify(teamAssignments));
+  }
   
   // Tab switching function
   function switchTab(tabName) {
@@ -376,6 +438,8 @@
       loadTeamRequests();
     } else if (tabName === 'all') {
       loadAllRequests();
+    } else if (tabName === 'teamMembers') {
+      loadTeamMembers();
     } else if (tabName === 'dashboard') {
       updateDashboardStats();
     }
@@ -427,7 +491,7 @@
     pendingList.innerHTML = '';
     
     if (pendingRequests.length === 0) {
-      pendingList.innerHTML = '<p>No pending expense requests for your team.</p>';
+      pendingList.innerHTML = '<div class="empty-state">No pending expense requests for your team.</div>';
       return;
     }
     
@@ -478,7 +542,7 @@
     teamList.innerHTML = '';
     
     if (teamRequests.length === 0) {
-      teamList.innerHTML = '<p>No expense requests from your team members.</p>';
+      teamList.innerHTML = '<div class="empty-state">No expense requests from your team members.</div>';
       return;
     }
     
@@ -535,15 +599,16 @@
     });
   }
   
-  // Load all requests (read-only for manager)
+  // Load all requests (read-only for manager except for their team)
   function loadAllRequests() {
     const allRequests = JSON.parse(localStorage.getItem('expenseRequests'));
+    const myTeamMembers = getMyTeamMembers();
     
     const allList = document.getElementById('allRequestsList');
     allList.innerHTML = '';
     
     if (allRequests.length === 0) {
-      allList.innerHTML = '<p>No expense requests found.</p>';
+      allList.innerHTML = '<div class="empty-state">No expense requests found.</div>';
       return;
     }
     
@@ -551,6 +616,7 @@
     allRequests.sort((a, b) => new Date(b.submittedDate) - new Date(a.submittedDate));
     
     allRequests.forEach(request => {
+      const isMyTeam = myTeamMembers.includes(request.employeeId);
       const requestItem = document.createElement('div');
       requestItem.className = `request-item ${request.status}`;
       
@@ -588,9 +654,51 @@
             ${request.notes ? `<br><strong>Notes:</strong> ${request.notes}` : ''}
           </div>
         ` : ''}
+        ${request.status === 'pending' && isMyTeam ? `
+          <div class="request-actions">
+            <button class="approve" onclick="openDecisionModal('${request.id}', 'approve')">Approve</button>
+            <button class="decline" onclick="openDecisionModal('${request.id}', 'decline')">Decline</button>
+          </div>
+        ` : ''}
+        ${request.status === 'pending' && !isMyTeam ? `
+          <div class="request-details">
+            <em>This request belongs to another team</em>
+          </div>
+        ` : ''}
       `;
       
       allList.appendChild(requestItem);
+    });
+  }
+
+  // Load team members
+  function loadTeamMembers() {
+    const allUsers = JSON.parse(localStorage.getItem('users'));
+    const myTeamMembers = getMyTeamMembers();
+    
+    const teamMembersList = document.getElementById('teamMembersList');
+    teamMembersList.innerHTML = '';
+    
+    if (myTeamMembers.length === 0) {
+      teamMembersList.innerHTML = '<div class="empty-state">No team members assigned to you.</div>';
+      return;
+    }
+    
+    myTeamMembers.forEach(memberId => {
+      const member = allUsers.find(user => user.id === memberId);
+      if (member) {
+        const memberItem = document.createElement('div');
+        memberItem.className = 'team-member';
+        memberItem.innerHTML = `
+          <div class="member-info">
+            <div class="member-name">${member.name || member.username}</div>
+            <div class="member-details">
+              Username: ${member.username} | Email: ${member.email || 'N/A'} | Role: Employee
+            </div>
+          </div>
+        `;
+        teamMembersList.appendChild(memberItem);
+      }
     });
   }
   
@@ -603,6 +711,13 @@
     
     if (!request) {
       alert('Request not found.');
+      return;
+    }
+    
+    // Verify this manager can approve/decline this request
+    const myTeamMembers = getMyTeamMembers();
+    if (!myTeamMembers.includes(request.employeeId)) {
+      alert('You can only approve/decline requests from your team members.');
       return;
     }
     
@@ -627,6 +742,9 @@
       </div>
       <div class="request-details">
         <strong>Date:</strong> ${request.date}
+      </div>
+      <div class="request-details">
+        <strong>Submitted:</strong> ${request.submittedDate}
       </div>
     `;
     
@@ -653,7 +771,7 @@
       return;
     }
     
-    // Check if manager has permission to approve this request
+    // Final verification that manager can approve this request
     const myTeamMembers = getMyTeamMembers();
     if (!myTeamMembers.includes(allRequests[requestIndex].employeeId)) {
       alert('You can only approve requests from your team members.');
@@ -661,7 +779,7 @@
     }
     
     allRequests[requestIndex].status = 'approved';
-    allRequests[requestIndex].approvedBy = user.name;
+    allRequests[requestIndex].approvedBy = user.name || user.username;
     allRequests[requestIndex].declinedBy = null;
     allRequests[requestIndex].decisionDate = new Date().toISOString().split('T')[0];
     allRequests[requestIndex].notes = document.getElementById('decisionNotes').value;
@@ -691,7 +809,7 @@
       return;
     }
     
-    // Check if manager has permission to decline this request
+    // Final verification that manager can decline this request
     const myTeamMembers = getMyTeamMembers();
     if (!myTeamMembers.includes(allRequests[requestIndex].employeeId)) {
       alert('You can only decline requests from your team members.');
@@ -699,7 +817,7 @@
     }
     
     allRequests[requestIndex].status = 'declined';
-    allRequests[requestIndex].declinedBy = user.name;
+    allRequests[requestIndex].declinedBy = user.name || user.username;
     allRequests[requestIndex].approvedBy = null;
     allRequests[requestIndex].decisionDate = new Date().toISOString().split('T')[0];
     allRequests[requestIndex].notes = document.getElementById('decisionNotes').value;
