@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Admin Dashboard - ExpenseEase</title>
+<style>
+  body { 
+    font-family: 'Montserrat', sans-serif; 
+    background-color: #f0f4f8; 
+    padding: 20px; 
+    margin: 0;
+  }
+  h2 { 
+    color: #4CAF50; 
+    margin-bottom: 20px; 
+    text-align: center;
+  }
+  .container { 
+    display: flex; 
+    flex-direction: column; 
+    max-width: 800px; 
+    margin: auto; 
+  }
+  .card { 
+    background: #fff; 
+    padding: 20px; 
+    margin-bottom: 15px; 
+    border-radius: 8px; 
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1); 
+    cursor: pointer; 
+    transition: background 0.3s, transform 0.2s;
+  }
+  .card:hover { 
+    background: #e0f7fa; 
+    transform: translateY(-2px);
+  }
+  h3 { 
+    margin: 0; 
+  }
+  
+  /* Modal Styles */
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+  }
+  .modal-content {
+    background-color: #fff;
+    margin: 5% auto;
+    padding: 20px;
+    border-radius: 8px;
+    width: 80%;
+    max-width: 600px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  }
+  .close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  .close:hover {
+    color: #000;
+  }
+  
+  /* Form Styles */
+  .form-group {
+    margin-bottom: 15px;
+  }
+  label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+  }
+  input, select, textarea {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+  }
+  button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-right: 10px;
+  }
+  button:hover {
+    background-color: #45a049;
+  }
+  button.secondary {
+    background-color: #6c757d;
+  }
+  button.secondary:hover {
+    background-color: #5a6268;
+  }
+  button.approve {
+    background-color: #28a745;
+  }
+  button.approve:hover {
+    background-color: #218838;
+  }
+  button.decline {
+    background-color: #dc3545;
+  }
+  button.decline:hover {
+    background-color: #c82333;
+  }
+  
+  /* Request Styles */
+  .request-item {
+    background: #fff;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border-left: 4px solid #4CAF50;
+  }
+  .request-item.pending {
+    border-left-color: #ffc107;
+  }
+  .request-item.approved {
+    border-left-color: #28a745;
+  }
+  .request-item.declined {
+    border-left-color: #dc3545;
+  }
+  .request-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .request-title {
+    font-weight: bold;
+    font-size: 18px;
+  }
+  .request-status {
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+  }
+  .status-pending {
+    background-color: #fff3cd;
+    color: #856404;
+  }
+  .status-approved {
+    background-color: #d4edda;
+    color: #155724;
+  }
+  .status-declined {
+    background-color: #f8d7da;
+    color: #721c24;
+  }
+  .request-details {
+    color: #666;
+    margin-bottom: 5px;
+  }
+  .request-actions {
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
+  }
+  
+  /* Tabs */
+  .tabs {
+    display: flex;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #ddd;
+  }
+  .tab {
+    padding: 10px 20px;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+  }
+  .tab.active {
+    border-bottom: 3px solid #4CAF50;
+    font-weight: bold;
+  }
+  .tab-content {
+    display: none;
+  }
+  .tab-content.active {
+    display: block;
+  }
+  
+  /* Stats Cards */
+  .stats-container {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .stat-card {
+    background: #fff;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    flex: 1;
+    min-width: 150px;
+    text-align: center;
+  }
+  .stat-value {
+    font-size: 24px;
+    font-weight: bold;
+    margin: 10px 0;
+  }
+  .stat-pending { border-top: 4px solid #ffc107; }
+  .stat-approved { border-top: 4px solid #28a745; }
+  .stat-declined { border-top: 4px solid #dc3545; }
+  .stat-total { border-top: 4px solid #4CAF50; }
+</style>
+</head>
+<body>
+
+<h2>Admin Dashboard</h2>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('dashboard')">Dashboard</div>
+  <div class="tab" onclick="switchTab('pending')">Pending Requests</div>
+  <div class="tab" onclick="switchTab('all')">All Requests</div>
+</div>
+
+<div class="container">
+  <div id="dashboard" class="tab-content active">
+    <div class="stats-container">
+      <div class="stat-card stat-pending">
+        <div>Pending</div>
+        <div class="stat-value" id="pendingCount">0</div>
+        <div>Requests</div>
+      </div>
+      <div class="stat-card stat-approved">
+        <div>Approved</div>
+        <div class="stat-value" id="approvedCount">0</div>
+        <div>Requests</div>
+      </div>
+      <div class="stat-card stat-declined">
+        <div>Declined</div>
+        <div class="stat-value" id="declinedCount">0</div>
+        <div>Requests</div>
+      </div>
+      <div class="stat-card stat-total">
+        <div>Total</div>
+        <div class="stat-value" id="totalCount">0</div>
+        <div>Requests</div>
+      </div>
+    </div>
+    
+    <div class="card" onclick="location.href='expenses.html'"><h3>Add Expense</h3></div>
+    <div class="card" onclick="location.href='reports.html'"><h3>View Reports</h3></div>
+    <div class="card" onclick="location.href='manage_users.html'"><h3>Manage Users</h3></div>
+    <div class="card" onclick="logout()"><h3>Logout</h3></div>
+  </div>
+  
+  <div id="pending" class="tab-content">
+    <h3>Pending Expense Requests</h3>
+    <div id="pendingRequestsList">
+      <!-- Pending requests will be loaded here -->
+    </div>
+  </div>
+  
+  <div id="all" class="tab-content">
+    <h3>All Expense Requests</h3>
+    <div id="allRequestsList">
+      <!-- All requests will be loaded here -->
+    </div>
+  </div>
+</div>
+
+<!-- Decision Modal -->
+<div id="decisionModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeDecisionModal()">&times;</span>
+    <h3 id="decisionTitle">Approve/Decline Request</h3>
+    <div id="requestDetails">
+      <!-- Request details will be loaded here -->
+    </div>
+    <div class="form-group">
+      <label for="decisionNotes">Notes (Optional)</label>
+      <textarea id="decisionNotes" rows="3" placeholder="Add any notes for the employee..."></textarea>
+    </div>
+    <div class="request-actions">
+      <button class="approve" onclick="approveRequest()">Approve</button>
+      <button class="decline" onclick="declineRequest()">Decline</button>
+      <button class="secondary" onclick="closeDecisionModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Global variable to track the current request being reviewed
+  let currentRequestId = null;
+  
+  // Initialize the app
+  document.addEventListener('DOMContentLoaded', function() {
+    // Verify role
+    const user = JSON.parse(localStorage.getItem('loggedInUser'));
+    if (!user || user.role !== 'admin') {
+      alert('Access denied.');
+      window.location.href = 'index.html';
+      return;
+    }
+    
+    // Initialize requests in localStorage if not exists
+    if (!localStorage.getItem('expenseRequests')) {
+      localStorage.setItem('expenseRequests', JSON.stringify([]));
+    }
+    
+    // Load dashboard stats and requests
+    updateDashboardStats();
+    loadPendingRequests();
+    loadAllRequests();
+  });
+  
+  // Tab switching function
+  function switchTab(tabName) {
+    // Update tabs
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.classList.remove('active');
+    });
+    document.querySelector(`.tab[onclick="switchTab('${tabName}')"]`).classList.add('active');
+    
+    // Update tab content
+    document.querySelectorAll('.tab-content').forEach(content => {
+      content.classList.remove('active');
+    });
+    document.getElementById(tabName).classList.add('active');
+    
+    // Refresh data when switching to these tabs
+    if (tabName === 'pending') {
+      loadPendingRequests();
+    } else if (tabName === 'all') {
+      loadAllRequests();
+    } else if (tabName === 'dashboard') {
+      updateDashboardStats();
+    }
+  }
+  
+  // Update dashboard statistics
+  function updateDashboardStats() {
+    const allRequests = JSON.parse(localStorage.getItem('expenseRequests'));
+    
+    const pendingCount = allRequests.filter(request => request.status === 'pending').length;
+    const approvedCount = allRequests.filter(request => request.status === 'approved').length;
+    const declinedCount = allRequests.filter(request => request.status === 'declined').length;
+    const totalCount = allRequests.length;
+    
+    document.getElementById('pendingCount').textContent = pendingCount;
+    document.getElementById('approvedCount').textContent = approvedCount;
+    document.getElementById('declinedCount').textContent = declinedCount;
+    document.getElementById('totalCount').textContent = totalCount;
+  }
+  
+  // Load pending requests
+  function loadPendingRequests() {
+    const allRequests = JSON.parse(localStorage.getItem('expenseRequests'));
+    const pendingRequests = allRequests.filter(request => request.status === 'pending');
+    
+    const pendingList = document.getElementById('pendingRequestsList');
+    pendingList.innerHTML = '';
+    
+    if (pendingRequests.length === 0) {
+      pendingList.innerHTML = '<p>No pending expense requests.</p>';
+      return;
+    }
+    
+    // Sort requests by date (oldest first)
+    pendingRequests.sort((a, b) => new Date(a.submittedDate) - new Date(b.submittedDate));
+    
+    pendingRequests.forEach(request => {
+      const requestItem = document.createElement('div');
+      requestItem.className = 'request-item pending';
+      
+      requestItem.innerHTML = `
+        <div class="request-header">
+          <div class="request-title">${request.title}</div>
+          <div class="request-status status-pending">Pending</div>
+        </div>
+        <div class="request-details">
+          <strong>Employee:</strong> ${request.employeeName} | 
+          <strong>Amount:</strong> $${request.amount.toFixed(2)} | 
+          <strong>Category:</strong> ${request.category}
+        </div>
+        <div class="request-details">
+          <strong>Description:</strong> ${request.description}
+        </div>
+        <div class="request-details">
+          <strong>Date:</strong> ${request.date} | 
+          <strong>Submitted:</strong> ${request.submittedDate}
+        </div>
+        <div class="request-actions">
+          <button class="approve" onclick="openDecisionModal('${request.id}', 'approve')">Approve</button>
+          <button class="decline" onclick="openDecisionModal('${request.id}', 'decline')">Decline</button>
+        </div>
+      `;
+      
+      pendingList.appendChild(requestItem);
+    });
+  }
+  
+  // Load all requests
+  function loadAllRequests() {
+    const allRequests = JSON.parse(localStorage.getItem('expenseRequests'));
+    
+    const allList = document.getElementById('allRequestsList');
+    allList.innerHTML = '';
+    
+    if (allRequests.length === 0) {
+      allList.innerHTML = '<p>No expense requests found.</p>';
+      return;
+    }
+    
+    // Sort requests by date (newest first)
+    allRequests.sort((a, b) => new Date(b.submittedDate) - new Date(a.submittedDate));
+    
+    allRequests.forEach(request => {
+      const requestItem = document.createElement('div');
+      requestItem.className = `request-item ${request.status}`;
+      
+      let statusClass = 'status-pending';
+      let statusText = 'Pending';
+      
+      if (request.status === 'approved') {
+        statusClass = 'status-approved';
+        statusText = 'Approved';
+      } else if (request.status === 'declined') {
+        statusClass = 'status-declined';
+        statusText = 'Declined';
+      }
+      
+      requestItem.innerHTML = `
+        <div class="request-header">
+          <div class="request-title">${request.title}</div>
+          <div class="request-status ${statusClass}">${statusText}</div>
+        </div>
+        <div class="request-details">
+          <strong>Employee:</strong> ${request.employeeName} | 
+          <strong>Amount:</strong> $${request.amount.toFixed(2)} | 
+          <strong>Category:</strong> ${request.category}
+        </div>
+        <div class="request-details">
+          <strong>Description:</strong> ${request.description}
+        </div>
+        <div class="request-details">
+          <strong>Date:</strong> ${request.date} | 
+          <strong>Submitted:</strong> ${request.submittedDate}
+        </div>
+        ${request.status !== 'pending' ? `
+          <div class="request-details">
+            <strong>${request.status === 'approved' ? 'Approved' : 'Declined'} by:</strong> ${request.status === 'approved' ? request.approvedBy : request.declinedBy} on ${request.decisionDate}
+            ${request.notes ? `<br><strong>Notes:</strong> ${request.notes}` : ''}
+          </div>
+        ` : ''}
+      `;
+      
+      allList.appendChild(requestItem);
+    });
+  }
+  
+  // Open decision modal
+  function openDecisionModal(requestId, action) {
+    currentRequestId = requestId;
+    
+    const allRequests = JSON.parse(localStorage.getItem('expenseRequests'));
+    const request = allRequests.find(req => req.id === requestId);
+    
+    if (!request) {
+      alert('Request not found.');
+      return;
+    }
+    
+    document.getElementById('decisionTitle').textContent = 
+      action === 'approve' ? 'Approve Expense Request' : 'Decline Expense Request';
+    
+    document.getElementById('requestDetails').innerHTML = `
+      <div class="request-details">
+        <strong>Employee:</strong> ${request.employeeName}
+      </div>
+      <div class="request-details">
+        <strong>Title:</strong> ${request.title}
+      </div>
+      <div class="request-details">
+        <strong>Amount:</strong> $${request.amount.toFixed(2)}
+      </div>
+      <div class="request-details">
+        <strong>Category:</strong> ${request.category}
+      </div>
+      <div class="request-details">
+        <strong>Description:</strong> ${request.description}
+      </div>
+      <div class="request-details">
+        <strong>Date:</strong> ${request.date}
+      </div>
+    `;
+    
+    document.getElementById('decisionNotes').value = '';
+    document.getElementById('decisionModal').style.display = 'block';
+  }
+  
+  // Close decision modal
+  function closeDecisionModal() {
+    document.getElementById('decisionModal').style.display = 'none';
+    currentRequestId = null;
+  }
+  
+  // Approve request
+  function approveRequest() {
+    if (!currentRequestId) return;
+    
+    const user = JSON.parse(localStorage.getItem('loggedInUser'));
+    const allRequests = JSON.parse(localStorage.getItem('expenseRequests'));
+    const requestIndex = allRequests.findIndex(req => req.id === currentRequestId);
+    
+    if (requestIndex === -1) {
+      alert('Request not found.');
+      return;
+    }
+    
+    allRequests[requestIndex].status = 'approved';
+    allRequests[requestIndex].approvedBy = user.name;
+    allRequests[requestIndex].declinedBy = null;
+    allRequests[requestIndex].decisionDate = new Date().toISOString().split('T')[0];
+    allRequests[requestIndex].notes = document.getElementById('decisionNotes').value;
+    
+    localStorage.setItem('expenseRequests', JSON.stringify(allRequests));
+    
+    alert('Request approved successfully!');
+    closeDecisionModal();
+    
+    // Refresh all views
+    updateDashboardStats();
+    loadPendingRequests();
+    loadAllRequests();
+    
+    // Switch to pending tab if we're on dashboard
+    if (document.getElementById('pending').classList.contains('active')) {
+      // Already on pending tab, no need to switch
+    } else {
+      switchTab('pending');
+    }
+  }
+  
+  // Decline request
+  function declineRequest() {
+    if (!currentRequestId) return;
+    
+    const user = JSON.parse(localStorage.getItem('loggedInUser'));
+    const allRequests = JSON.parse(localStorage.getItem('expenseRequests'));
+    const requestIndex = allRequests.findIndex(req => req.id === currentRequestId);
+    
+    if (requestIndex === -1) {
+      alert('Request not found.');
+      return;
+    }
+    
+    allRequests[requestIndex].status = 'declined';
+    allRequests[requestIndex].declinedBy = user.name;
+    allRequests[requestIndex].approvedBy = null;
+    allRequests[requestIndex].decisionDate = new Date().toISOString().split('T')[0];
+    allRequests[requestIndex].notes = document.getElementById('decisionNotes').value;
+    
+    localStorage.setItem('expenseRequests', JSON.stringify(allRequests));
+    
+    alert('Request declined.');
+    closeDecisionModal();
+    
+    // Refresh all views
+    updateDashboardStats();
+    loadPendingRequests();
+    loadAllRequests();
+    
+    // Switch to pending tab if we're on dashboard
+    if (document.getElementById('pending').classList.contains('active')) {
+      // Already on pending tab, no need to switch
+    } else {
+      switchTab('pending');
+    }
+  }
+  
+  // Logout function
+  function logout() {
+    localStorage.removeItem('loggedInUser');
+    alert('Logged out successfully.');
+    window.location.href = 'index.html';
+  }
+</script>
+
+</body>
+</html>
