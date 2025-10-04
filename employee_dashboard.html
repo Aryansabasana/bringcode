@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Employee Dashboard - ExpenseEase</title>
+<style>
+  body { 
+    font-family: 'Montserrat', sans-serif; 
+    background-color: #f0f4f8; 
+    padding: 20px; 
+    margin: 0;
+  }
+  h2 { 
+    color: #4CAF50; 
+    margin-bottom: 20px; 
+    text-align: center;
+  }
+  .container { 
+    display: flex; 
+    flex-direction: column; 
+    max-width: 600px; 
+    margin: auto; 
+  }
+  .card { 
+    background: #fff; 
+    padding: 20px; 
+    margin-bottom: 15px; 
+    border-radius: 8px; 
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1); 
+    cursor: pointer; 
+    transition: background 0.3s, transform 0.2s;
+  }
+  .card:hover { 
+    background: #e0f7fa; 
+    transform: translateY(-2px);
+  }
+  h3 { 
+    margin: 0; 
+  }
+  
+  /* Modal Styles */
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+  }
+  .modal-content {
+    background-color: #fff;
+    margin: 10% auto;
+    padding: 20px;
+    border-radius: 8px;
+    width: 80%;
+    max-width: 500px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  }
+  .close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  .close:hover {
+    color: #000;
+  }
+  
+  /* Form Styles */
+  .form-group {
+    margin-bottom: 15px;
+  }
+  label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+  }
+  input, select, textarea {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+  }
+  button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-right: 10px;
+  }
+  button:hover {
+    background-color: #45a049;
+  }
+  button.secondary {
+    background-color: #6c757d;
+  }
+  button.secondary:hover {
+    background-color: #5a6268;
+  }
+  
+  /* Request History */
+  .request-item {
+    background: #fff;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border-left: 4px solid #4CAF50;
+  }
+  .request-item.pending {
+    border-left-color: #ffc107;
+  }
+  .request-item.approved {
+    border-left-color: #28a745;
+  }
+  .request-item.declined {
+    border-left-color: #dc3545;
+  }
+  .request-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .request-title {
+    font-weight: bold;
+    font-size: 18px;
+  }
+  .request-status {
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+  }
+  .status-pending {
+    background-color: #fff3cd;
+    color: #856404;
+  }
+  .status-approved {
+    background-color: #d4edda;
+    color: #155724;
+  }
+  .status-declined {
+    background-color: #f8d7da;
+    color: #721c24;
+  }
+  .request-details {
+    color: #666;
+    margin-bottom: 5px;
+  }
+  
+  /* Tabs */
+  .tabs {
+    display: flex;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #ddd;
+  }
+  .tab {
+    padding: 10px 20px;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+  }
+  .tab.active {
+    border-bottom: 3px solid #4CAF50;
+    font-weight: bold;
+  }
+  .tab-content {
+    display: none;
+  }
+  .tab-content.active {
+    display: block;
+  }
+</style>
+</head>
+<body>
+
+<h2>Employee Dashboard</h2>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('dashboard')">Dashboard</div>
+  <div class="tab" onclick="switchTab('requests')">My Requests</div>
+</div>
+
+<div class="container">
+  <div id="dashboard" class="tab-content active">
+    <div class="card" onclick="openExpenseModal()"><h3>Submit Expense Request</h3></div>
+    <div class="card" onclick="location.href='expenses.html'"><h3>Add Expense</h3></div>
+    <div class="card" onclick="logout()"><h3>Logout</h3></div>
+  </div>
+  
+  <div id="requests" class="tab-content">
+    <h3>My Expense Requests</h3>
+    <div id="requestsList">
+      <!-- Requests will be loaded here -->
+    </div>
+  </div>
+</div>
+
+<!-- Expense Request Modal -->
+<div id="expenseModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeExpenseModal()">&times;</span>
+    <h3>Submit Expense Request</h3>
+    <form id="expenseForm">
+      <div class="form-group">
+        <label for="expenseTitle">Expense Title</label>
+        <input type="text" id="expenseTitle" required>
+      </div>
+      <div class="form-group">
+        <label for="expenseAmount">Amount ($)</label>
+        <input type="number" id="expenseAmount" min="0" step="0.01" required>
+      </div>
+      <div class="form-group">
+        <label for="expenseCategory">Category</label>
+        <select id="expenseCategory" required>
+          <option value="">Select Category</option>
+          <option value="Travel">Travel</option>
+          <option value="Meals">Meals</option>
+          <option value="Equipment">Equipment</option>
+          <option value="Training">Training</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="expenseDescription">Description</label>
+        <textarea id="expenseDescription" rows="3" required></textarea>
+      </div>
+      <div class="form-group">
+        <label for="expenseDate">Date</label>
+        <input type="date" id="expenseDate" required>
+      </div>
+      <div class="form-group">
+        <label for="receiptUpload">Upload Receipt (Optional)</label>
+        <input type="file" id="receiptUpload">
+      </div>
+      <button type="submit">Submit Request</button>
+      <button type="button" class="secondary" onclick="closeExpenseModal()">Cancel</button>
+    </form>
+  </div>
+</div>
+
+<script>
+  // Initialize the app
+  document.addEventListener('DOMContentLoaded', function() {
+    // Verify role
+    const user = JSON.parse(localStorage.getItem('loggedInUser'));
+    if (!user || user.role !== 'employee') {
+      alert('Access denied.');
+      window.location.href = 'index.html';
+      return;
+    }
+    
+    // Initialize requests in localStorage if not exists
+    if (!localStorage.getItem('expenseRequests')) {
+      localStorage.setItem('expenseRequests', JSON.stringify([]));
+    }
+    
+    // Load user's requests
+    loadUserRequests();
+    
+    // Set today's date as default for the expense form
+    document.getElementById('expenseDate').valueAsDate = new Date();
+  });
+  
+  // Tab switching function
+  function switchTab(tabName) {
+    // Update tabs
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.classList.remove('active');
+    });
+    document.querySelector(`.tab[onclick="switchTab('${tabName}')"]`).classList.add('active');
+    
+    // Update tab content
+    document.querySelectorAll('.tab-content').forEach(content => {
+      content.classList.remove('active');
+    });
+    document.getElementById(tabName).classList.add('active');
+  }
+  
+  // Modal functions
+  function openExpenseModal() {
+    document.getElementById('expenseModal').style.display = 'block';
+  }
+  
+  function closeExpenseModal() {
+    document.getElementById('expenseModal').style.display = 'none';
+    document.getElementById('expenseForm').reset();
+    document.getElementById('expenseDate').valueAsDate = new Date();
+  }
+  
+  // Form submission
+  document.getElementById('expenseForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const user = JSON.parse(localStorage.getItem('loggedInUser'));
+    const requests = JSON.parse(localStorage.getItem('expenseRequests'));
+    
+    const newRequest = {
+      id: Date.now().toString(),
+      employeeId: user.id,
+      employeeName: user.name,
+      title: document.getElementById('expenseTitle').value,
+      amount: parseFloat(document.getElementById('expenseAmount').value),
+      category: document.getElementById('expenseCategory').value,
+      description: document.getElementById('expenseDescription').value,
+      date: document.getElementById('expenseDate').value,
+      status: 'pending',
+      submittedDate: new Date().toISOString().split('T')[0],
+      approvedBy: null,
+      declinedBy: null,
+      decisionDate: null,
+      notes: null
+    };
+    
+    requests.push(newRequest);
+    localStorage.setItem('expenseRequests', JSON.stringify(requests));
+    
+    alert('Expense request submitted successfully!');
+    closeExpenseModal();
+    loadUserRequests();
+    
+    // Switch to requests tab
+    switchTab('requests');
+  });
+  
+  // Load user's expense requests
+  function loadUserRequests() {
+    const user = JSON.parse(localStorage.getItem('loggedInUser'));
+    const allRequests = JSON.parse(localStorage.getItem('expenseRequests'));
+    const userRequests = allRequests.filter(request => request.employeeId === user.id);
+    
+    const requestsList = document.getElementById('requestsList');
+    requestsList.innerHTML = '';
+    
+    if (userRequests.length === 0) {
+      requestsList.innerHTML = '<p>No expense requests found.</p>';
+      return;
+    }
+    
+    // Sort requests by date (newest first)
+    userRequests.sort((a, b) => new Date(b.submittedDate) - new Date(a.submittedDate));
+    
+    userRequests.forEach(request => {
+      const requestItem = document.createElement('div');
+      requestItem.className = `request-item ${request.status}`;
+      
+      let statusClass = 'status-pending';
+      let statusText = 'Pending';
+      
+      if (request.status === 'approved') {
+        statusClass = 'status-approved';
+        statusText = 'Approved';
+      } else if (request.status === 'declined') {
+        statusClass = 'status-declined';
+        statusText = 'Declined';
+      }
+      
+      requestItem.innerHTML = `
+        <div class="request-header">
+          <div class="request-title">${request.title}</div>
+          <div class="request-status ${statusClass}">${statusText}</div>
+        </div>
+        <div class="request-details">
+          <strong>Amount:</strong> $${request.amount.toFixed(2)} | 
+          <strong>Category:</strong> ${request.category} | 
+          <strong>Date:</strong> ${request.date}
+        </div>
+        <div class="request-details">
+          <strong>Description:</strong> ${request.description}
+        </div>
+        <div class="request-details">
+          <strong>Submitted:</strong> ${request.submittedDate}
+        </div>
+        ${request.status !== 'pending' ? `
+          <div class="request-details">
+            <strong>${request.status === 'approved' ? 'Approved' : 'Declined'} by:</strong> ${request.status === 'approved' ? request.approvedBy : request.declinedBy} on ${request.decisionDate}
+            ${request.notes ? `<br><strong>Notes:</strong> ${request.notes}` : ''}
+          </div>
+        ` : ''}
+      `;
+      
+      requestsList.appendChild(requestItem);
+    });
+  }
+  
+  // Logout function
+  function logout() {
+    localStorage.removeItem('loggedInUser');
+    alert('Logged out successfully.');
+    window.location.href = 'index.html';
+  }
+</script>
+
+</body>
+</html>
