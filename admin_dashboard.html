@@ -19,7 +19,7 @@
   .container { 
     display: flex; 
     flex-direction: column; 
-    max-width: 800px; 
+    max-width: 1000px; 
     margin: auto; 
   }
   .card { 
@@ -117,6 +117,19 @@
   button.decline:hover {
     background-color: #c82333;
   }
+  button.warning {
+    background-color: #ffc107;
+    color: #000;
+  }
+  button.warning:hover {
+    background-color: #e0a800;
+  }
+  button.override {
+    background-color: #17a2b8;
+  }
+  button.override:hover {
+    background-color: #138496;
+  }
   
   /* Request Styles */
   .request-item {
@@ -171,6 +184,7 @@
     margin-top: 10px;
     display: flex;
     gap: 10px;
+    flex-wrap: wrap;
   }
   
   /* Tabs */
@@ -178,6 +192,7 @@
     display: flex;
     margin-bottom: 20px;
     border-bottom: 1px solid #ddd;
+    flex-wrap: wrap;
   }
   .tab {
     padding: 10px 20px;
@@ -220,16 +235,75 @@
   .stat-approved { border-top: 4px solid #28a745; }
   .stat-declined { border-top: 4px solid #dc3545; }
   .stat-total { border-top: 4px solid #4CAF50; }
+  .stat-users { border-top: 4px solid #17a2b8; }
+
+  /* User Management Styles */
+  .user-item {
+    background: #fff;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .user-info {
+    flex: 1;
+  }
+  .user-name {
+    font-weight: bold;
+    font-size: 16px;
+    margin-bottom: 5px;
+  }
+  .user-details {
+    color: #666;
+    font-size: 14px;
+  }
+  .user-actions {
+    display: flex;
+    gap: 10px;
+  }
+  .role-badge {
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+  }
+  .role-employee {
+    background-color: #e3f2fd;
+    color: #1976d2;
+  }
+  .role-manager {
+    background-color: #fff3e0;
+    color: #f57c00;
+  }
+  .role-admin {
+    background-color: #fce4ec;
+    color: #c2185b;
+  }
+
+  /* Override Notice */
+  .override-notice {
+    background-color: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 4px;
+    padding: 10px;
+    margin: 10px 0;
+    font-size: 14px;
+    color: #856404;
+  }
 </style>
 </head>
 <body>
 
-<h2>Admin Dashboard</h2>
+<h2>Admin Dashboard - ExpenseEase</h2>
 
 <div class="tabs">
   <div class="tab active" onclick="switchTab('dashboard')">Dashboard</div>
   <div class="tab" onclick="switchTab('pending')">Pending Requests</div>
   <div class="tab" onclick="switchTab('all')">All Requests</div>
+  <div class="tab" onclick="switchTab('users')">User Management</div>
 </div>
 
 <div class="container">
@@ -255,6 +329,11 @@
         <div class="stat-value" id="totalCount">0</div>
         <div>Requests</div>
       </div>
+      <div class="stat-card stat-users">
+        <div>Users</div>
+        <div class="stat-value" id="usersCount">0</div>
+        <div>Total</div>
+      </div>
     </div>
     
     <div class="card" onclick="location.href='expenses.html'"><h3>Add Expense</h3></div>
@@ -274,6 +353,16 @@
     <h3>All Expense Requests</h3>
     <div id="allRequestsList">
       <!-- All requests will be loaded here -->
+    </div>
+  </div>
+
+  <div id="users" class="tab-content">
+    <h3>User Management</h3>
+    <div class="override-notice">
+      <strong>Admin Override:</strong> You can change user roles and override manager decisions.
+    </div>
+    <div id="usersList">
+      <!-- Users will be loaded here -->
     </div>
   </div>
 </div>
@@ -298,9 +387,50 @@
   </div>
 </div>
 
+<!-- User Role Modal -->
+<div id="roleModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeRoleModal()">&times;</span>
+    <h3>Change User Role</h3>
+    <div id="userDetails">
+      <!-- User details will be loaded here -->
+    </div>
+    <div class="form-group">
+      <label for="newRole">Select New Role:</label>
+      <select id="newRole">
+        <option value="employee">Employee</option>
+        <option value="manager">Manager</option>
+        <option value="admin">Admin</option>
+      </select>
+    </div>
+    <div class="request-actions">
+      <button class="approve" onclick="updateUserRole()">Update Role</button>
+      <button class="secondary" onclick="closeRoleModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete User Modal -->
+<div id="deleteUserModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeDeleteUserModal()">&times;</span>
+    <h3>Confirm User Deletion</h3>
+    <div id="deleteUserDetails">
+      <!-- User details will be loaded here -->
+    </div>
+    <p><strong>Warning:</strong> This action cannot be undone. All user data including expenses and requests will be permanently deleted.</p>
+    <div class="request-actions">
+      <button class="decline" onclick="confirmUserDelete()">Delete User</button>
+      <button class="secondary" onclick="closeDeleteUserModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <script>
-  // Global variable to track the current request being reviewed
+  // Global variables
   let currentRequestId = null;
+  let currentUserId = null;
+  let userToDelete = null;
   
   // Initialize the app
   document.addEventListener('DOMContentLoaded', function() {
@@ -312,15 +442,19 @@
       return;
     }
     
-    // Initialize requests in localStorage if not exists
+    // Initialize data in localStorage if not exists
     if (!localStorage.getItem('expenseRequests')) {
       localStorage.setItem('expenseRequests', JSON.stringify([]));
+    }
+    if (!localStorage.getItem('users')) {
+      localStorage.setItem('users', JSON.stringify([]));
     }
     
     // Load dashboard stats and requests
     updateDashboardStats();
     loadPendingRequests();
     loadAllRequests();
+    loadUsers();
   });
   
   // Tab switching function
@@ -342,6 +476,8 @@
       loadPendingRequests();
     } else if (tabName === 'all') {
       loadAllRequests();
+    } else if (tabName === 'users') {
+      loadUsers();
     } else if (tabName === 'dashboard') {
       updateDashboardStats();
     }
@@ -350,16 +486,19 @@
   // Update dashboard statistics
   function updateDashboardStats() {
     const allRequests = JSON.parse(localStorage.getItem('expenseRequests'));
+    const allUsers = JSON.parse(localStorage.getItem('users'));
     
     const pendingCount = allRequests.filter(request => request.status === 'pending').length;
     const approvedCount = allRequests.filter(request => request.status === 'approved').length;
     const declinedCount = allRequests.filter(request => request.status === 'declined').length;
     const totalCount = allRequests.length;
+    const usersCount = allUsers.length;
     
     document.getElementById('pendingCount').textContent = pendingCount;
     document.getElementById('approvedCount').textContent = approvedCount;
     document.getElementById('declinedCount').textContent = declinedCount;
     document.getElementById('totalCount').textContent = totalCount;
+    document.getElementById('usersCount').textContent = usersCount;
   }
   
   // Load pending requests
@@ -439,6 +578,10 @@
         statusText = 'Declined';
       }
       
+      // Check if admin can override this decision
+      const canOverride = request.status === 'declined' && request.declinedBy && 
+                         request.declinedBy !== 'Admin' && request.declinedBy !== 'admin';
+      
       requestItem.innerHTML = `
         <div class="request-header">
           <div class="request-title">${request.title}</div>
@@ -462,9 +605,68 @@
             ${request.notes ? `<br><strong>Notes:</strong> ${request.notes}` : ''}
           </div>
         ` : ''}
+        <div class="request-actions">
+          ${request.status === 'pending' ? `
+            <button class="approve" onclick="openDecisionModal('${request.id}', 'approve')">Approve</button>
+            <button class="decline" onclick="openDecisionModal('${request.id}', 'decline')">Decline</button>
+          ` : ''}
+          ${canOverride ? `
+            <button class="override" onclick="overrideManagerDecision('${request.id}')">Override (Approve)</button>
+          ` : ''}
+        </div>
       `;
       
       allList.appendChild(requestItem);
+    });
+  }
+  
+  // Load users for management
+  function loadUsers() {
+    const allUsers = JSON.parse(localStorage.getItem('users'));
+    const currentUser = JSON.parse(localStorage.getItem('loggedInUser'));
+    
+    const usersList = document.getElementById('usersList');
+    usersList.innerHTML = '';
+    
+    if (allUsers.length === 0) {
+      usersList.innerHTML = '<p>No users found.</p>';
+      return;
+    }
+    
+    allUsers.forEach(user => {
+      let roleClass = 'role-employee';
+      let roleText = 'Employee';
+      
+      if (user.role === 'manager') {
+        roleClass = 'role-manager';
+        roleText = 'Manager';
+      } else if (user.role === 'admin') {
+        roleClass = 'role-admin';
+        roleText = 'Admin';
+      }
+      
+      // Don't allow deleting or changing role of current user
+      const isCurrentUser = user.id === currentUser.id;
+      
+      const userItem = document.createElement('div');
+      userItem.className = 'user-item';
+      userItem.innerHTML = `
+        <div class="user-info">
+          <div class="user-name">${user.name || user.username}</div>
+          <div class="user-details">
+            Username: ${user.username} | Email: ${user.email || 'N/A'} | 
+            Role: <span class="role-badge ${roleClass}">${roleText}</span>
+          </div>
+        </div>
+        <div class="user-actions">
+          ${!isCurrentUser ? `
+            <button class="warning" onclick="openRoleModal('${user.id}')">Change Role</button>
+            <button class="decline" onclick="openDeleteUserModal('${user.id}')">Delete</button>
+          ` : '<span style="color: #666;">Current User</span>'}
+        </div>
+      `;
+      
+      usersList.appendChild(userItem);
     });
   }
   
@@ -528,7 +730,7 @@
     }
     
     allRequests[requestIndex].status = 'approved';
-    allRequests[requestIndex].approvedBy = user.name;
+    allRequests[requestIndex].approvedBy = user.name || 'Admin';
     allRequests[requestIndex].declinedBy = null;
     allRequests[requestIndex].decisionDate = new Date().toISOString().split('T')[0];
     allRequests[requestIndex].notes = document.getElementById('decisionNotes').value;
@@ -542,13 +744,6 @@
     updateDashboardStats();
     loadPendingRequests();
     loadAllRequests();
-    
-    // Switch to pending tab if we're on dashboard
-    if (document.getElementById('pending').classList.contains('active')) {
-      // Already on pending tab, no need to switch
-    } else {
-      switchTab('pending');
-    }
   }
   
   // Decline request
@@ -565,7 +760,7 @@
     }
     
     allRequests[requestIndex].status = 'declined';
-    allRequests[requestIndex].declinedBy = user.name;
+    allRequests[requestIndex].declinedBy = user.name || 'Admin';
     allRequests[requestIndex].approvedBy = null;
     allRequests[requestIndex].decisionDate = new Date().toISOString().split('T')[0];
     allRequests[requestIndex].notes = document.getElementById('decisionNotes').value;
@@ -579,13 +774,161 @@
     updateDashboardStats();
     loadPendingRequests();
     loadAllRequests();
-    
-    // Switch to pending tab if we're on dashboard
-    if (document.getElementById('pending').classList.contains('active')) {
-      // Already on pending tab, no need to switch
-    } else {
-      switchTab('pending');
+  }
+  
+  // Override manager's declined decision
+  function overrideManagerDecision(requestId) {
+    if (!confirm('Are you sure you want to override the manager\'s decision and approve this request?')) {
+      return;
     }
+    
+    const user = JSON.parse(localStorage.getItem('loggedInUser'));
+    const allRequests = JSON.parse(localStorage.getItem('expenseRequests'));
+    const requestIndex = allRequests.findIndex(req => req.id === requestId);
+    
+    if (requestIndex === -1) {
+      alert('Request not found.');
+      return;
+    }
+    
+    allRequests[requestIndex].status = 'approved';
+    allRequests[requestIndex].approvedBy = user.name || 'Admin (Override)';
+    allRequests[requestIndex].declinedBy = null;
+    allRequests[requestIndex].decisionDate = new Date().toISOString().split('T')[0];
+    allRequests[requestIndex].notes = 'Overridden by admin. Originally declined by manager.';
+    
+    localStorage.setItem('expenseRequests', JSON.stringify(allRequests));
+    
+    alert('Request approved (manager decision overridden).');
+    
+    // Refresh all views
+    updateDashboardStats();
+    loadPendingRequests();
+    loadAllRequests();
+  }
+  
+  // Open role change modal
+  function openRoleModal(userId) {
+    currentUserId = userId;
+    
+    const allUsers = JSON.parse(localStorage.getItem('users'));
+    const user = allUsers.find(u => u.id === userId);
+    
+    if (!user) {
+      alert('User not found.');
+      return;
+    }
+    
+    document.getElementById('userDetails').innerHTML = `
+      <div class="request-details">
+        <strong>User:</strong> ${user.name || user.username}
+      </div>
+      <div class="request-details">
+        <strong>Current Role:</strong> ${user.role}
+      </div>
+      <div class="request-details">
+        <strong>Username:</strong> ${user.username}
+      </div>
+    `;
+    
+    document.getElementById('newRole').value = user.role;
+    document.getElementById('roleModal').style.display = 'block';
+  }
+  
+  // Close role modal
+  function closeRoleModal() {
+    document.getElementById('roleModal').style.display = 'none';
+    currentUserId = null;
+  }
+  
+  // Update user role
+  function updateUserRole() {
+    if (!currentUserId) return;
+    
+    const allUsers = JSON.parse(localStorage.getItem('users'));
+    const userIndex = allUsers.findIndex(u => u.id === currentUserId);
+    
+    if (userIndex === -1) {
+      alert('User not found.');
+      return;
+    }
+    
+    const newRole = document.getElementById('newRole').value;
+    allUsers[userIndex].role = newRole;
+    
+    localStorage.setItem('users', JSON.stringify(allUsers));
+    
+    alert(`User role updated to ${newRole}.`);
+    closeRoleModal();
+    
+    // Refresh users list
+    loadUsers();
+    updateDashboardStats();
+  }
+  
+  // Open delete user modal
+  function openDeleteUserModal(userId) {
+    userToDelete = userId;
+    
+    const allUsers = JSON.parse(localStorage.getItem('users'));
+    const user = allUsers.find(u => u.id === userId);
+    
+    if (!user) {
+      alert('User not found.');
+      return;
+    }
+    
+    document.getElementById('deleteUserDetails').innerHTML = `
+      <div class="request-details">
+        <strong>User:</strong> ${user.name || user.username}
+      </div>
+      <div class="request-details">
+        <strong>Role:</strong> ${user.role}
+      </div>
+      <div class="request-details">
+        <strong>Username:</strong> ${user.username}
+      </div>
+    `;
+    
+    document.getElementById('deleteUserModal').style.display = 'block';
+  }
+  
+  // Close delete user modal
+  function closeDeleteUserModal() {
+    document.getElementById('deleteUserModal').style.display = 'none';
+    userToDelete = null;
+  }
+  
+  // Confirm user deletion
+  function confirmUserDelete() {
+    if (!userToDelete) return;
+    
+    const allUsers = JSON.parse(localStorage.getItem('users'));
+    const allRequests = JSON.parse(localStorage.getItem('expenseRequests'));
+    const allExpenses = JSON.parse(localStorage.getItem('expenses')) || [];
+    
+    // Remove user from users array
+    const updatedUsers = allUsers.filter(user => user.id !== userToDelete);
+    
+    // Remove user's expense requests
+    const updatedRequests = allRequests.filter(request => request.employeeId !== userToDelete);
+    
+    // Remove user's expenses
+    const updatedExpenses = allExpenses.filter(expense => expense.userId !== userToDelete);
+    
+    // Save updated data
+    localStorage.setItem('users', JSON.stringify(updatedUsers));
+    localStorage.setItem('expenseRequests', JSON.stringify(updatedRequests));
+    localStorage.setItem('expenses', JSON.stringify(updatedExpenses));
+    
+    alert('User deleted successfully.');
+    closeDeleteUserModal();
+    
+    // Refresh all views
+    loadUsers();
+    updateDashboardStats();
+    loadPendingRequests();
+    loadAllRequests();
   }
   
   // Logout function
